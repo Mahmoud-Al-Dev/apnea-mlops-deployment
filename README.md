@@ -39,24 +39,18 @@ The project utilizes a decoupled CI/CD pattern to manage infrastructure and soft
 
 ```text
 apnea-mlops-project/
-├── deploy.sh
-├── README.md                  # Project documentation
-│
+├── .github/workflows/         # CI/CD pipeline definitions
+│   └── ci.yml                 # Automated build and test workflow
 ├── app/                       # Application & Model source code
-│   ├── Dockerfile             # Multi-stage build for the FastAPI inference server
-│   ├── main.py                # API endpoints and data validation
-│   ├── model.py               # Dummy diagnostic logic (preparing for RLHF model)
-│   └── requirements.txt       
-│
+│   ├── Dockerfile             # Multi-stage production build
+│   ├── main.py                # FastAPI endpoints & validation
+│   ├── model.py               # ML Diagnostic logic (RLHF ready)
+│   └── requirements.txt       # Python dependencies
+├── configuration/             # Ansible playbooks
+│   └── playbook.yml           # OS hardening & hardware orchestration
 ├── infrastructure/            # Terraform IaC definitions
-│   ├── main.tf                # VPC, EC2, IAM, and Security Group provisioning
+│   ├── main.tf                # VPC, EC2, and IAM resources
 │   ├── variables.tf           # Environment configuration
-│   ├── outputs.tf             # IP and URL state outputs
-│   └── providers.tf           # AWS provider configuration
-│
-├── configuration/             # Ansible Configuration Management
-│   └── playbook.yml           # OS hardening, Docker, and NVIDIA toolkit setup
-│
-└── .github/
-│   ├── workflows
-│       ├── ci.yml
+│   ├── outputs.tf             # Deployment state outputs
+│   └── providers.tf           # AWS provider & S3 backend config
+└── deploy.sh                  # Master orchestration wrapper script
