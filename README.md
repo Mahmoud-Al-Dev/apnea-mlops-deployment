@@ -5,8 +5,8 @@
 ![AWS](https://img.shields.io/badge/AWS-232F3E?style=for-the-badge&logo=amazon-aws&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)
+![CI/CD](https://img.shields.io/badge/CI%2FCD-2088FF?style=for-the-badge&logo=github-actions&logoColor=white)
 
-🫁 Apnea Detection MLOps Pipeline
 📌 Technical Project Overview
 
 This project demonstrates a production-grade MLOps lifecycle for a medical diagnostic tool. It automates the deployment of a FastAPI inference engine that processes 6-channel physiological signals (PFlow, Thorax, Abdomen, Vitalog1, Vitalog2, SaO2) to detect sleep apnea events.
