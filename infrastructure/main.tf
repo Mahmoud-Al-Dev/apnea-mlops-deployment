@@ -77,17 +77,17 @@ resource "aws_security_group" "api_sg" {
     from_port   = var.container_port
     to_port     = var.container_port
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = var.ssh_cidrs
   }
 
   # Optional SSH if ssh_cidr is set
   dynamic "ingress" {
-    for_each = var.ssh_cidr != "" ? [1] : []
+    for_each = var.ssh_cidrs != "" ? [1] : []
     content {
       from_port   = 22
       to_port     = 22
       protocol    = "tcp"
-      cidr_blocks = [var.ssh_cidr]
+      cidr_blocks = [var.ssh_cidrs]
     }
   }
 
@@ -95,7 +95,7 @@ resource "aws_security_group" "api_sg" {
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = var.ssh_cidrs
   }
 
   tags = { Name = "${var.project_name}-sg" }
