@@ -1,0 +1,93 @@
+---
+- name: Configure Apnea API Server
+  hosts: all
+  become: yes # Run tasks as root (sudo)
+  vars:
+    aws_region: "eu-central-1" # Match your TF region
+    # You will pass these variables dynamically later
+    ecr_registry: "{{ ecr_registry_url }}"
+    ecr_image: "{{ ecr_image_url }}"
+    container_port: 8000
+
+  tasks:
+    # --------------------
+    # 1. OS Hardening & Prep
+    # --------------------
+    - name: Update apt cache and upgrade packages
+      ansible.builtin.apt:
+        update_cache: yes
+        upgrade: dist
+
+    - name: Install required dependencies
+      ansible.builtin.apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - software-properties-common
+          - awscli
+        state: present
+
+    # --------------------
+    # 2. Install Docker
+    # --------------------
+    - name: Add Docker GPG apt Key
+      ansible.builtin.apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+
+    - name: Add Docker Repository
+      ansible.builtin.apt_repository:
+        repo: deb https://download.docker.com/linux/ubuntu jammy stable
+        state: present
+
+    - name: Install Docker Engine
+      ansible.builtin.apt:
+        name: docker-ce
+        state: present
+
+    - name: Ensure Docker service is running
+      ansible.builtin.service:
+        name: docker
+        state: started
+        enabled: yes
+
+    # --------------------
+    # 3. Install NVIDIA Container Toolkit
+    # --------------------
+    - name: Add NVIDIA package repositories
+      ansible.builtin.shell: |
+        curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg
+        curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list | \
+          sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | \
+          sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list
+      args:
+        creates: /etc/apt/sources.list.d/nvidia-container-toolkit.list
+
+    - name: Install NVIDIA Container Toolkit
+      ansible.builtin.apt:
+        name: nvidia-container-toolkit
+        state: present
+        update_cache: yes
+
+    - name: Restart Docker to apply NVIDIA runtime
+      ansible.builtin.service:
+        name: docker
+        state: restarted
+
+    # --------------------
+    # 4. Deploy the Container
+    # --------------------
+    - name: Log into AWS ECR
+      ansible.builtin.shell: "aws ecr get-login-password --region {{ aws_region }} | docker login --username AWS --password-stdin {{ ecr_registry }}"
+      changed_when: false # Prevents Ansible from always marking this as "changed"
+
+    - name: Run Apnea API Container
+      community.docker.docker_container:
+        name: apnea-api
+        image: "{{ ecr_image }}"
+        state: started
+        restart_policy: unless-stopped
+        pull: true
+        ports:
+          - "{{ container_port }}:{{ container_port }}"
