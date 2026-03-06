@@ -69,35 +69,38 @@ resource "aws_route_table_association" "public_assoc" {
 # --------------------
 resource "aws_security_group" "api_sg" {
   name        = "${var.project_name}-sg"
-  description = "Allow inbound API traffic and restricted SSH"
+  description = "Allow inbound API traffic" 
   vpc_id      = aws_vpc.this.id
 
-  # API port open to the world
+  # API port open to the world (fine for demo; tighten later)
   ingress {
     from_port   = var.container_port
     to_port     = var.container_port
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"] 
+    cidr_blocks = var.ssh_cidrs
   }
 
-  # SSH port restricted to our specific IPs
-  ingress {
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = var.ssh_cidrs # No brackets needed! It is already a list.
+  # Optional SSH if ssh_cidr is set
+  dynamic "ingress" {
+    for_each = var.ssh_cidrs != "" ? [1] : []
+    content {
+      from_port   = 22
+      to_port     = 22
+      protocol    = "tcp"
+      cidr_blocks = [var.ssh_cidrs]
+    }
   }
 
-  # Egress: Allows the server to talk to the internet (required to pull Docker images)
   egress {
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = var.ssh_cidrs
   }
 
   tags = { Name = "${var.project_name}-sg" }
 }
+
 # --------------------
 # IAM role for EC2 to pull from ECR
 # --------------------
