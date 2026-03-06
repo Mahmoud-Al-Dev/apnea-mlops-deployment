@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main # Runs the pipeline every time you push to main
+  workflow_dispatch:
 
 # Define global environment variables for the pipeline
 env:
