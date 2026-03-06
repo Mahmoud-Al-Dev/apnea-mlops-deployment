@@ -1,37 +1,96 @@
-name: Apnea API Integration Test
+name: Apnea MLOps Pipeline (CI/CD)
 
-# 1. THE TRIGGER: When should the robot wake up?
 on:
   push:
     branches:
-      - main # Wakes up every time you push to the 'main' branch
+      - main # Runs the pipeline every time you push to main
 
-# 2. THE JOBS: What should the robot do?
+# Define global environment variables for the pipeline
+env:
+  AWS_REGION: "eu-central-1"
+  ANSIBLE_HOST_KEY_CHECKING: "False" # Bypasses the strict SSH 'yes/no' prompt
+
 jobs:
-  test-and-build:
-    # Spins up a fresh Ubuntu machine in the cloud
-    runs-on: ubuntu-latest 
-
+  # ==========================================
+  # PHASE 1: CONTINUOUS INTEGRATION (Testing)
+  # ==========================================
+  integration-test:
+    runs-on: ubuntu-latest
     steps:
-      # Step A: Download your code from GitHub onto this fresh machine
       - name: 📥 Checkout Code
         uses: actions/checkout@v4
 
-      # Step B: Install Python 3.11
       - name: 🐍 Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
-      # Step C: Install your FastAPI requirements
       - name: 📦 Install Dependencies
-        run: |
-          cd app
-          pip install -r requirements.txt
+        working-directory: ./app
+        run: pip install -r requirements.txt
 
-      # Step D: Do a dry-run build of your Docker image
-      # If your Dockerfile has an error, this will fail and stop the pipeline!
       - name: 🐳 Test Docker Build
+        working-directory: ./app
+        run: docker build -t apnea-api-test .
+
+  # ==========================================
+  # PHASE 2: CONTINUOUS DEPLOYMENT (AWS & Ansible)
+  # ==========================================
+  deploy-to-aws:
+    needs: integration-test # Only runs if Phase 1 passes!
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 🔐 Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: 🐳 Build and Push Image to ECR
+        working-directory: ./app
         run: |
-          cd app
-          docker build -t apnea-api-test .
+          AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+          ECR_REGISTRY="${AWS_ACCOUNT_ID}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com"
+          
+          echo "Logging into ECR..."
+          aws ecr get-login-password --region ${{ env.AWS_REGION }} | docker login --username AWS --password-stdin $ECR_REGISTRY
+          
+          echo "Building and Pushing Image..."
+          docker build -t apnea-api:latest .
+          docker tag apnea-api:latest $ECR_REGISTRY/apnea-api:latest
+          docker push $ECR_REGISTRY/apnea-api:latest
+
+      - name: 🔑 Set up SSH Key for Ansible
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/apnea_key
+          chmod 600 ~/.ssh/apnea_key
+
+      - name: 🌍 Get GitHub Runner IP
+        id: get_ip
+        run: |
+          RUNNER_IP=$(curl -s https://checkip.amazonaws.com)
+          echo "Runner IP is $RUNNER_IP"
+          echo "runner_ip=$RUNNER_IP" >> $GITHUB_ENV
+
+      - name: 🏗️ Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: 🚀 Deploy Infrastructure (Terraform)
+        working-directory: ./infrastructure
+        run: |
+          terraform init
+          # We pass the robot's IP directly into Terraform to open Port 22
+          terraform apply -auto-approve -var="ssh_cidr=${{ env.runner_ip }}/32"
+
+      - name: ⚙️ Install Ansible
+        run: sudo apt-get update && sudo apt-get install -y ansible
+
+      - name: 🚢 Run Configuration Management (Ansible)
+        run: |
+          chmod +x deploy.sh
+          ./deploy.sh
