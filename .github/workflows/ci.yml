@@ -69,7 +69,10 @@ jobs:
           mkdir -p ~/.ssh
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/apnea_key
           chmod 600 ~/.ssh/apnea_key
-
+          # --- NEW LINE BELOW ---
+          # Extract the public key from the private key so Terraform can use it
+          ssh-keygen -y -f ~/.ssh/apnea_key > ~/.ssh/apnea_key.pub
+        
       - name: 🌍 Get GitHub Runner IP
         id: get_ip
         run: |
