@@ -19,9 +19,10 @@ variable "container_port" {
 }
 
 # Optional: restrict SSH to your public IP/32. Leave "" to disable SSH.
-variable "ssh_cidr" {
-  type    = string
-  default = "" # e.g. "203.0.113.10/32"
+variable "ssh_cidrs" {
+  type        = list(string)
+  description = "List of IPs allowed to SSH into the EC2 instance"
+  default     = [] # Completely empty and safe for public GitHub!
 }
 
 variable "instance_type" {
