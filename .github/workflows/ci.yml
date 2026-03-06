@@ -1,0 +1,37 @@
+name: Apnea API Integration Test
+
+# 1. THE TRIGGER: When should the robot wake up?
+on:
+  push:
+    branches:
+      - main # Wakes up every time you push to the 'main' branch
+
+# 2. THE JOBS: What should the robot do?
+jobs:
+  test-and-build:
+    # Spins up a fresh Ubuntu machine in the cloud
+    runs-on: ubuntu-latest 
+
+    steps:
+      # Step A: Download your code from GitHub onto this fresh machine
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      # Step B: Install Python 3.11
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      # Step C: Install your FastAPI requirements
+      - name: 📦 Install Dependencies
+        run: |
+          cd app
+          pip install -r requirements.txt
+
+      # Step D: Do a dry-run build of your Docker image
+      # If your Dockerfile has an error, this will fail and stop the pipeline!
+      - name: 🐳 Test Docker Build
+        run: |
+          cd app
+          docker build -t apnea-api-test .
