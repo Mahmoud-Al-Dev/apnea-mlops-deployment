@@ -12,6 +12,7 @@
 This project demonstrates a production-grade MLOps lifecycle for a medical diagnostic tool. It automates the deployment of a FastAPI inference engine that processes 6-channel physiological signals (PFlow, Thorax, Abdomen, Vitalog1, Vitalog2, SaO2) to detect sleep apnea events.
 
 By combining Infrastructure-as-Code (IaC) with Configuration Management, this pipeline ensures that the medical environment is reproducible, secure, and ready for high-performance GPU workloads.
+
 ⚙️ CI/CD & Automation Workflow
 
 The project utilizes a decoupled CI/CD pattern to manage infrastructure and software configuration independently:
