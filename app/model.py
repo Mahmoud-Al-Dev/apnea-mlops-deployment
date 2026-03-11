@@ -36,7 +36,8 @@ class PentaLSTM(nn.Module):
 # =================================================================
 
 MODEL = None
-WEIGHTS_PATH = "penta_lstm_weights.pth"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+WEIGHTS_PATH = os.path.join(BASE_DIR, "penta_lstm_weights.pth")
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 def load_model():
@@ -87,7 +88,6 @@ def process_csv_and_predict(df: pd.DataFrame):
         window = data[start:end] 
         windows.append(window)
         
-    # PyTorch LSTMs can dynamically handle the new 256Hz length!
     input_tensor = torch.from_numpy(np.array(windows)).float().to(DEVICE)
     
     # Inference
@@ -95,7 +95,6 @@ def process_csv_and_predict(df: pd.DataFrame):
         logits = MODEL(input_tensor)
         
         # NOTE: If you changed back to binary (1 output), use torch.sigmoid here instead!
-        # Assuming you are using the multi-class (3 outputs) from your uploaded code:
         probs = torch.softmax(logits, dim=1)
         predicted_classes = torch.argmax(probs, dim=1).cpu().numpy()
     
@@ -116,8 +115,8 @@ def process_csv_and_predict(df: pd.DataFrame):
         
         results.append({
             "window_index": i,
-            "start_time_sec": actual_start_time,  # Matches CSV exactly!
-            "end_time_sec": actual_end_time,      # Matches CSV exactly!
+            "start_time_sec": actual_start_time,  
+            "end_time_sec": actual_end_time,      
             "predicted_class": class_map[class_idx],
             "confidence": round(probs_list[i][class_idx], 4),
             "is_apnea": bool(class_idx != 0)
