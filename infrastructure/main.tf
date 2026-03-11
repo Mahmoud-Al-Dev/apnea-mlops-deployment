@@ -79,7 +79,21 @@ resource "aws_security_group" "api_sg" {
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"] 
   }
+  # FastAPI Backend
+  ingress {
+    from_port   = 8000
+    to_port     = 8000
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"] 
+  }
 
+  # Streamlit Frontend
+  ingress {
+    from_port   = 8501
+    to_port     = 8501
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
   # SSH port restricted to our Secret IPs
   ingress {
     from_port   = 22
