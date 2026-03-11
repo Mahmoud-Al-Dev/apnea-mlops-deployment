@@ -153,6 +153,11 @@ resource "aws_instance" "api" {
   
   # Attach the SSH key
   key_name = aws_key_pair.deployer.key_name
+  
+  root_block_device {
+    volume_size = 30
+    volume_type = "gp3"
+  }
 
   tags = { Name = "${var.project_name}-ec2" }
 }
