@@ -1,30 +1,34 @@
-from fastapi import FastAPI
-from pydantic import BaseModel
-import numpy as np
-from model import predict_apnea
-from fastapi import HTTPException
-app = FastAPI()
+from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+import pandas as pd
+import io
+from model import process_csv_and_predict
 
-# Define the structure of the incoming data
-class SignalData(BaseModel):
-    # Expecting a list of lists (the 6-channel time series)
-    signals: list[list[float]] 
+app = FastAPI(title="Apnea Detection API")
 
-@app.get("/")
-def home():
-    return {"message": "Sleep Apnea Detection API is Online"}
-@app.get("/health")
-def health():
-    return {"status": "ok"}
-@app.post("/predict")
-def get_prediction(data: SignalData):
-    # Convert input to numpy for the dummy model
-    input_array = np.array(data.signals)
+# Allow Streamlit to talk to FastAPI
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Replace your predict_csv function in main.py with this:
+
+@app.post("/predict_csv")
+async def predict_csv(file: UploadFile = File(...)):
+    if not file.filename.endswith('.csv'):
+        raise HTTPException(status_code=400, detail="Only CSV files are allowed.")
     
-    # Basic validation: ensure we have 6 channels
-    if input_array.shape[1] != 6:
-        raise HTTPException(status_code=400, detail="Input must have exactly 6 channels")
-
-
-    result = predict_apnea(input_array)
-    return result
+    contents = await file.read()
+    
+    # HARDCODED: Tell pandas there are no headers, then assign them
+    df = pd.read_csv(io.BytesIO(contents), header=None)
+    df.columns = ['PFlow', 'Abdomen', 'Thorax', 'SaO2', 'Vitalog1', 'Vitalog2', 'time_sec']
+    
+    try:
+        results = process_csv_and_predict(df)
+        return {"filename": file.filename, "predictions": results}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

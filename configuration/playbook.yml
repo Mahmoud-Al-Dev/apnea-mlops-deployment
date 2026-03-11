@@ -3,8 +3,7 @@
   hosts: all
   become: yes # Run tasks as root (sudo)
   vars:
-    aws_region: "eu-central-1" # Match your TF region
-    # You will pass these variables dynamically later
+    aws_region: "eu-central-1" 
     ecr_registry: "{{ ecr_registry_url }}"
     ecr_image: "{{ ecr_image_url }}"
     container_port: 8000

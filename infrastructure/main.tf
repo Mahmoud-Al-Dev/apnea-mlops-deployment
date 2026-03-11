@@ -29,7 +29,7 @@ resource "aws_vpc" "this" {
 
 resource "aws_key_pair" "deployer" {
   key_name   = "${var.project_name}-key"
-  public_key = file("~/.ssh/apnea_key.pub") # Path to your local public key
+  public_key = file("~/.ssh/apnea_key.pub") 
 }
 
 resource "aws_internet_gateway" "igw" {
@@ -42,7 +42,7 @@ resource "aws_subnet" "public" {
   cidr_block              = "10.10.1.0/24"
   map_public_ip_on_launch = true
 
-  # eu-central-1 has multiple AZs; pick "a" for simplicity
+  # eu-central-1 has multiple AZs; picking "a" for simplicity
   availability_zone = "eu-central-1a"
 
   tags = { Name = "${var.project_name}-public-subnet" }
@@ -69,7 +69,7 @@ resource "aws_route_table_association" "public_assoc" {
 # --------------------
 resource "aws_security_group" "api_sg" {
   name        = "${var.project_name}-sg"
-  description = "Allow inbound API traffic" # Original description prevents the deadlock!
+  description = "Allow inbound API traffic"
   vpc_id      = aws_vpc.this.id
 
   # API port open to the world
@@ -85,7 +85,7 @@ resource "aws_security_group" "api_sg" {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = var.ssh_cidrs # NO BRACKETS HERE! This fixes the list error.
+    cidr_blocks = var.ssh_cidrs 
   }
 
   # Egress: Allows the server to talk to the internet (required to pull Docker images)
@@ -143,3 +143,17 @@ resource "aws_instance" "api" {
   tags = { Name = "${var.project_name}-ec2" }
 }
 
+# --------------------
+# S3 Bucket for ML Weights
+# --------------------
+resource "aws_s3_bucket" "ml_weights" {
+  bucket = "${var.project_name}-ml-weights-${data.aws_caller_identity.current.account_id}"
+}
+
+# --------------------
+# Allow EC2 to read from S3
+# --------------------
+resource "aws_iam_role_policy_attachment" "s3_read" {
+  role       = aws_iam_role.ec2_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess"
+}
