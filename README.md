@@ -10,6 +10,7 @@
 
 ## 🎯 Final Application Result
 
+<img width="3556" height="1862" alt="Screenshot from 2026-03-11 17-03-55" src="https://github.com/user-attachments/assets/f6b32f32-c79b-48ee-bd0f-38f320c83d35" />
 
 
 ---
