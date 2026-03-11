@@ -79,13 +79,6 @@ resource "aws_security_group" "api_sg" {
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"] 
   }
-  # FastAPI Backend
-  ingress {
-    from_port   = 8000
-    to_port     = 8000
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"] 
-  }
 
   # Streamlit Frontend
   ingress {
@@ -153,7 +146,7 @@ resource "aws_instance" "api" {
   
   # Attach the SSH key
   key_name = aws_key_pair.deployer.key_name
-  
+
   root_block_device {
     volume_size = 30
     volume_type = "gp3"
