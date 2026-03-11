@@ -90,3 +90,4 @@
         pull: true
         ports:
           - "{{ container_port }}:{{ container_port }}"
+          - "8501:8501"
