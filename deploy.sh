@@ -14,11 +14,18 @@ REGION="eu-central-1"
 ECR_REGISTRY="${AWS_ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com"
 ECR_IMAGE="${ECR_REGISTRY}/apnea-api:latest"
 
+# 1. Dynamically grab the S3 Bucket Name from Terraform outputs
+S3_BUCKET_NAME=$(terraform -chdir=infrastructure output -raw weights_bucket_name)
+
 echo "----------------------------------------"
 echo "🚀 Target EC2 IP: $EC2_IP"
 echo "📦 ECR Registry:  $ECR_REGISTRY"
+echo "🪣 ML Bucket:     $S3_BUCKET_NAME"
 echo "----------------------------------------"
-echo "⚙️  Starting Ansible Playbook..."
+
+# 2. Download the weights from S3 into the app folder BEFORE building Docker
+echo "⬇️ Downloading model weights from S3..."
+aws s3 cp s3://${S3_BUCKET_NAME}/penta_lstm_weights.pth ./app/
 
 # 4. Run Ansible (Pointing it to the playbook inside the configuration folder)
 ansible-playbook -i "$EC2_IP," configuration/playbook.yml \
