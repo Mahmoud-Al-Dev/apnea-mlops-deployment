@@ -86,10 +86,14 @@ jobs:
 
       - name: 🚀 Deploy Infrastructure (Terraform)
         working-directory: ./infrastructure
+        env:
+          # Map the secret and the runner IP to env vars first
+          MY_IP: ${{ secrets.MY_HOME_IP }}
+          RUNNER_IP: ${{ env.runner_ip }}
         run: |
           terraform init
-          # We pass the robot's IP directly into Terraform to open Port 22
-          terraform apply -auto-approve -var='ssh_cidrs=["${{ secrets.MY_HOME_IP }}", "${{ env.runner_ip }}/32"]'
+        # Use the env vars inside the terraform command
+          terraform apply -auto-approve -var="ssh_cidrs=[\"$MY_IP\", \"$RUNNER_IP/32\"]"
 
       - name: ⚙️ Install Ansible
         run: sudo apt-get update && sudo apt-get install -y ansible
