@@ -1,6 +1,7 @@
 #!/bin/bash
 set -e 
 
+
 echo "🔍 Fetching infrastructure details..."
 
 # 1. Grab the IP from Terraform (Using -chdir to tell Terraform where the files are)

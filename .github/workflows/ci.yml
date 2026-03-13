@@ -81,6 +81,16 @@ jobs:
           echo "Runner IP is $RUNNER_IP"
           echo "runner_ip=$RUNNER_IP" >> $GITHUB_ENV
 
+      - name: Import Secrets from HCP Vault
+        uses: hashicorp/vault-action@v2
+        with:
+          url: 'https://vault-cluster-mse-public-vault-654106e8.76beaedd.z1.hashicorp.cloud:8200' 
+          namespace: 'admin' # HCP Vault Dedicated uses the 'admin' namespace by default
+          token: ${{ secrets.VAULT_TOKEN }} # THIS MUST BE IN GITHUB SECRETS!
+          secrets: |
+            secret/data/apnea-project/aws access_key | TF_VAR_aws_access_key ;
+            secret/data/apnea-project/aws secret_key | TF_VAR_aws_secret_key
+
       - name: 🏗️ Setup Terraform
         uses: hashicorp/setup-terraform@v3
 

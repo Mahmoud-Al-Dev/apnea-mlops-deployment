@@ -1,5 +1,8 @@
 data "aws_caller_identity" "current" {}
 
+data "vault_generic_secret" "aws_creds" {
+  path = "secret/aws" 
+}
 # Latest Ubuntu 22.04 (Jammy) AMI in eu-central-1
 data "aws_ami" "ubuntu" {
   most_recent = true
@@ -15,6 +18,19 @@ locals {
   ecr_registry = "${data.aws_caller_identity.current.account_id}.dkr.ecr.${var.aws_region}.amazonaws.com"
   ecr_image    = "${local.ecr_registry}/${var.ecr_repo_name}:latest"
 }
+
+# 1. Fetch the secret from Vault
+data "vault_generic_secret" "aws_creds" {
+  path = "secret/apnea-project/aws"
+}
+
+# 2. Configure the AWS Provider using the fetched secrets
+provider "aws" {
+  region     = "eu-central-1"
+  access_key = data.vault_generic_secret.aws_creds.data["access_key"]
+  secret_key = data.vault_generic_secret.aws_creds.data["secret_key"]
+}
+
 
 # --------------------
 # Networking (VPC)

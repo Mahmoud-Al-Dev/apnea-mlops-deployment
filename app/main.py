@@ -14,7 +14,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Replace your predict_csv function in main.py with this:
 
 @app.post("/predict_csv")
 async def predict_csv(file: UploadFile = File(...)):
