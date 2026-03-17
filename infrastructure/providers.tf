@@ -21,9 +21,13 @@ terraform {
 }
 
 provider "aws" {
-  region = var.aws_region
+  region     = var.aws_region
+  # Pull the credentials from the Vault data block defined in main.tf
+  access_key = data.vault_generic_secret.aws_creds.data["access_key"]
+  secret_key = data.vault_generic_secret.aws_creds.data["secret_key"]
 }
 
 provider "vault" {
+  address   = "https://vault-cluster-public-vault-c7b91c25.526e6a69.z1.hashicorp.cloud:8200"
   namespace = "admin" 
 }
