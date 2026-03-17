@@ -1,21 +1,16 @@
 #!/bin/bash
 set -e 
 
-
 echo "🔍 Fetching infrastructure details..."
 
 # 1. Grab the IP from Terraform (Using -chdir to tell Terraform where the files are)
 EC2_IP=$(terraform -chdir=infrastructure output -raw api_public_ip)
 
-# 2. Grab your AWS Account ID dynamically using the AWS CLI
-AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-REGION="eu-central-1"
+# 2. Grab ECR variables directly from Terraform outputs!
+ECR_REGISTRY=$(terraform -chdir=infrastructure output -raw ecr_registry_url)
+ECR_IMAGE=$(terraform -chdir=infrastructure output -raw ecr_image_url)
 
-# 3. Construct the ECR variables
-ECR_REGISTRY="${AWS_ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com"
-ECR_IMAGE="${ECR_REGISTRY}/apnea-api:latest"
-
-# 1. Dynamically grab the S3 Bucket Name from Terraform outputs
+# 3. Dynamically grab the S3 Bucket Name from Terraform outputs
 S3_BUCKET_NAME=$(terraform -chdir=infrastructure output -raw weights_bucket_name)
 
 echo "----------------------------------------"
@@ -24,11 +19,11 @@ echo "📦 ECR Registry:  $ECR_REGISTRY"
 echo "🪣 ML Bucket:     $S3_BUCKET_NAME"
 echo "----------------------------------------"
 
-# 2. Download the weights from S3 into the app folder BEFORE building Docker
+# 4. Download the weights from S3 into the app folder BEFORE building Docker
 echo "⬇️ Downloading model weights from S3..."
 aws s3 cp s3://${S3_BUCKET_NAME}/penta_lstm_weights.pth ./app/
 
-# 4. Run Ansible (Pointing it to the playbook inside the configuration folder)
+# 5. Run Ansible (Pointing it to the playbook inside the configuration folder)
 ansible-playbook -i "$EC2_IP," configuration/playbook.yml \
   --user ubuntu \
   --private-key ~/.ssh/apnea_key \

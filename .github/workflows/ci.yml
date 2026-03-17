@@ -3,13 +3,13 @@ name: Apnea MLOps Pipeline (CI/CD)
 on:
   push:
     branches:
-      - main # Runs the pipeline every time you push to main
+      - main # Runs the pipeline every time we push to main
   workflow_dispatch:
 
 # Define global environment variables for the pipeline
 env:
   AWS_REGION: "eu-central-1"
-  ANSIBLE_HOST_KEY_CHECKING: "False" # Bypasses the strict SSH 'yes/no' prompt
+  ANSIBLE_HOST_KEY_CHECKING: "False" # Bypasses the SSH 'yes/no' prompt
 
 jobs:
   # ==========================================
@@ -48,7 +48,7 @@ jobs:
       - name: 🔐 Import Secrets from HCP Vault
         uses: hashicorp/vault-action@v3
         with:
-          url: 'https://vault-cluster-mse-public-vault-654106e8.76beaedd.z1.hashicorp.cloud:8200' 
+          url: 'https://vault-cluster-public-vault-c7b91c25.526e6a69.z1.hashicorp.cloud:8200' 
           namespace: 'admin' 
           method: approle
           roleId: ${{ secrets.VAULT_ROLE_ID }}

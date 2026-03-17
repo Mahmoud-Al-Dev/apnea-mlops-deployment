@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  # 1. Your ML Application
+  apnea-api:
+    image: {{ ecr_image }}
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+      - "8501:8501"
+
+  # 2. Prometheus (Scrapes metrics)
+  prometheus:
+    image: prom/prometheus:latest
+    restart: unless-stopped
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml # Mounts the config we made earlier!
+    # No ports exposed here! It stays hidden on the internal network.
+
+  # 3. Node Exporter (Scrapes hardware metrics)
+  node-exporter:
+    image: prom/node-exporter:latest
+    restart: unless-stopped
+    # No ports exposed here either!
+
+  # 4. Grafana (The beautiful dashboard UI)
+  grafana:
+    image: grafana/grafana:latest
+    restart: unless-stopped
+    ports:
+      - "3000:3000" # Open to the public so you can log in
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin # Default password, you can change this!

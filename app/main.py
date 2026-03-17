@@ -4,6 +4,8 @@ import pandas as pd
 import io
 from model import process_csv_and_predict
 
+from prometheus_fastapi_instrumentator import Instrumentator
+
 app = FastAPI(title="Apnea Detection API")
 
 # Allow Streamlit to talk to FastAPI
@@ -14,6 +16,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# --- NEW INSTRUMENTATION BLOCK ---
+Instrumentator().instrument(app).expose(app)
+# ---------------------------------
 
 @app.post("/predict_csv")
 async def predict_csv(file: UploadFile = File(...)):
@@ -22,7 +27,7 @@ async def predict_csv(file: UploadFile = File(...)):
     
     contents = await file.read()
     
-    # HARDCODED: Tell pandas there are no headers, then assign them
+    # HARDCODED: Tells pandas there are no headers, then assign them
     df = pd.read_csv(io.BytesIO(contents), header=None)
     df.columns = ['PFlow', 'Abdomen', 'Thorax', 'SaO2', 'Vitalog1', 'Vitalog2', 'time_sec']
     
