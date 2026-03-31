@@ -21,7 +21,9 @@ echo "----------------------------------------"
 
 # 4. Download the weights from S3 into the app folder BEFORE building Docker
 echo "⬇️ Downloading model weights from S3..."
-aws s3 cp s3://${S3_BUCKET_NAME}/penta_lstm_weights.pth ./app/
+aws s3 cp s3://${S3_BUCKET_NAME}/penta_lstm_CA_weights.pth ./app/
+aws s3 cp s3://${S3_BUCKET_NAME}/penta_lstm_OSA_weights.pth ./app/
+
 
 # 5. Run Ansible (Pointing it to the playbook inside the configuration folder)
 ansible-playbook -i "$EC2_IP," configuration/playbook.yml \
