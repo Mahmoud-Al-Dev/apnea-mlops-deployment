@@ -71,7 +71,7 @@ CA_THRESHOLD = 0.5
 # Signal processing constants
 FS_ORIGINAL = 256
 FS_TARGET = 32
-TRIM_SEC = 1200            # 20 minutes from start and end
+TRIM_SEC = 0            # 20 minutes from start and end
 WINDOW_SEC = 30
 STEP_SEC = 20              # 10s overlap => 20s step
 
@@ -135,12 +135,7 @@ def apply_bandpass(signal, lowcut, highcut, fs, order=2):
 # 5. PREPROCESSING PIPELINE
 # ============================================================
 def preprocess_raw_signal(df: pd.DataFrame, save_features: bool = False):
-    """
-    Takes raw uploaded dataframe and returns:
-    - X_input: (num_segments, 30*32, 6)
-    - segment_times: (num_segments, 30*32)
-    - processed_df_32hz: dataframe of selected 6 channels + time
-    """
+
 
     required_cols = ["PFlow", "Thorax", "Abdomen", "SaO2", "Vitalog1", "Vitalog2", "time_sec"]
     missing = [c for c in required_cols if c not in df.columns]

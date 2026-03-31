@@ -1,16 +1,13 @@
 ---
 - name: Configure Apnea API Server
   hosts: all
-  become: yes # Run tasks as root (sudo)
+  become: yes
   vars:
-    aws_region: "eu-central-1" 
+    aws_region: "eu-central-1"
     ecr_registry: "{{ ecr_registry_url }}"
     ecr_image: "{{ ecr_image_url }}"
 
   tasks:
-    # --------------------
-    # 1. OS Hardening & Prep
-    # --------------------
     - name: Update apt cache and upgrade packages
       ansible.builtin.apt:
         update_cache: yes
@@ -26,9 +23,6 @@
           - awscli
         state: present
 
-    # --------------------
-    # 2. Install Docker & Docker Compose
-    # --------------------
     - name: Add Docker GPG apt Key
       ansible.builtin.apt_key:
         url: https://download.docker.com/linux/ubuntu/gpg
@@ -39,10 +33,9 @@
         repo: deb https://download.docker.com/linux/ubuntu jammy stable
         state: present
 
-    # Notice we added docker-compose-plugin here!
     - name: Install Docker Engine and Compose
       ansible.builtin.apt:
-        name: 
+        name:
           - docker-ce
           - docker-compose-plugin
         state: present
@@ -53,14 +46,39 @@
         state: started
         enabled: yes
 
-    # --------------------
-    # 3. Deploy the Multi-Container Stack
-    # --------------------
     - name: Create project directory on server
       ansible.builtin.file:
         path: /opt/apnea
         state: directory
-        mode: '0755'
+        mode: "0755"
+
+    - name: Create weights directory on server
+      ansible.builtin.file:
+        path: /opt/apnea/weights
+        state: directory
+        mode: "0755"
+
+    - name: Remove broken OSA mount path if it exists as directory
+      ansible.builtin.file:
+        path: /opt/apnea/weights/penta_lstm_OSA_weights.pth
+        state: absent
+
+    - name: Remove broken CA mount path if it exists as directory
+      ansible.builtin.file:
+        path: /opt/apnea/weights/penta_lstm_CA_weights.pth
+        state: absent
+
+    - name: Copy OSA weights to server
+      ansible.builtin.copy:
+        src: ../app/penta_lstm_OSA_weights.pth
+        dest: /opt/apnea/weights/penta_lstm_OSA_weights.pth
+        mode: "0644"
+
+    - name: Copy CA weights to server
+      ansible.builtin.copy:
+        src: ../app/penta_lstm_CA_weights.pth
+        dest: /opt/apnea/weights/penta_lstm_CA_weights.pth
+        mode: "0644"
 
     - name: Copy Prometheus configuration
       ansible.builtin.copy:
@@ -73,10 +91,16 @@
         dest: /opt/apnea/docker-compose.yml
 
     - name: Log into AWS ECR
-      ansible.builtin.shell: "aws ecr get-login-password --region {{ aws_region }} | docker login --username AWS --password-stdin {{ ecr_registry }}"
-      changed_when: false 
+      ansible.builtin.shell: aws ecr get-login-password --region {{ aws_region }} | docker login --username AWS --password-stdin {{ ecr_registry }}
+      changed_when: false
+
+    - name: Stop existing Docker Compose stack
+      ansible.builtin.shell: docker compose down
+      args:
+        chdir: /opt/apnea
+      ignore_errors: true
 
     - name: Start Docker Compose Stack
-      ansible.builtin.shell: docker compose up -d
+      ansible.builtin.shell: docker compose up -d --force-recreate
       args:
         chdir: /opt/apnea
