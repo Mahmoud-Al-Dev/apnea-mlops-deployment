@@ -20,3 +20,5 @@ requests
 pandas
 python-multipart
 prometheus-fastapi-instrumentator
+scipy==1.13.1
+scikit-learn==1.5.2
