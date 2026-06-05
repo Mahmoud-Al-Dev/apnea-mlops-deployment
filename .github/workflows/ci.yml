@@ -48,7 +48,7 @@ jobs:
       - name: 🔐 Import Secrets from HCP Vault
         uses: hashicorp/vault-action@v3
         with:
-          url: 'https://vault-cluster-public-vault-c7b91c25.526e6a69.z1.hashicorp.cloud:8200' 
+          url: 'https://vault-cluster-public-vault-8c7a912a.0a2ef11a.z1.hashicorp.cloud:8200' 
           namespace: 'admin' 
           method: approle
           roleId: ${{ secrets.VAULT_ROLE_ID }}
