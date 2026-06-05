@@ -28,7 +28,7 @@ provider "aws" {
 }
 
 provider "vault" {
-  address   = "https://vault-cluster-public-vault-c7b91c25.526e6a69.z1.hashicorp.cloud:8200"
+  address   = "https://vault-cluster-public-vault-8c7a912a.0a2ef11a.z1.hashicorp.cloud:8200"
   namespace = "admin" 
   skip_child_token = true
 }
